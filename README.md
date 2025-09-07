@@ -2,7 +2,7 @@
 
 This diagram illustrates the GitLab workflow cycle, including branches, merge requests, and the initial branch for each type of request. It follows the Git Flow strategy.
 
-## Flowchart
+## Enhanced Flowchart with CI/CD Stages
 
 ```mermaid
 graph TD
@@ -14,33 +14,44 @@ graph TD
 
     C --> F[Develop Feature Code]
     F --> G[Create Merge Request<br/>to develop]
-    G --> H[Test & Review<br/>CI/CD Pipeline]
-    H --> I[Merge to develop]
-    I --> B
+    G --> H[Code Review<br/>Peer Review Required]
+    H --> I[CI Pipeline<br/>Lint + Unit Tests]
+    I --> J[Security Scan<br/>SAST + Dependency Check]
+    J --> K[Merge to develop]
+    K --> B
 
     V --> W[Fix Bug<br/>Development bug fix]
     W --> X[Create Merge Request<br/>to develop]
-    X --> Y[Test & Review<br/>CI/CD Pipeline]
-    Y --> Z[Merge to develop]
-    Z --> B
+    X --> Y[Code Review<br/>Peer Review Required]
+    Y --> Z[CI Pipeline<br/>Lint + Unit Tests]
+    Z --> AA[Security Scan<br/>SAST + Dependency Check]
+    AA --> BB[Merge to develop]
+    BB --> B
 
-    D --> J[Prepare Release<br/>Final testing]
-    J --> K[Create Merge Request<br/>to main]
-    K --> L[Test & Review<br/>CI/CD Pipeline]
-    L --> M[Merge to main]
-    M --> N[Deploy to Production]
-    N --> A
-    M --> O[Merge back to develop<br/>Optional]
-    O --> B
+    D --> CC[Prepare Release<br/>Final testing]
+    CC --> DD[Create Merge Request<br/>to main]
+    DD --> EE[Code Review<br/>Senior Review Required]
+    EE --> FF[Full CI/CD Pipeline<br/>All Tests + Integration]
+    FF --> GG[Security Scan<br/>Full Security Suite]
+    GG --> HH[Compliance Check<br/>License + Standards]
+    HH --> II[Merge to main]
+    II --> JJ[Deploy to Staging]
+    JJ --> KK[Integration Tests<br/>E2E + Performance]
+    KK --> LL[Deploy to Production]
+    LL --> A
+    II --> MM[Merge back to develop<br/>Sync branches]
+    MM --> B
 
-    E --> P[Fix Bug<br/>Quick hotfix]
-    P --> Q[Create Merge Request<br/>to main]
-    Q --> R[Test & Review<br/>CI/CD Pipeline]
-    R --> S[Merge to main]
-    S --> T[Merge to develop]
-    T --> B
-    S --> U[Deploy to Production]
-    U --> A
+    E --> NN[Fix Bug<br/>Critical hotfix]
+    NN --> OO[Create Merge Request<br/>to main]
+    OO --> PP[Emergency Review<br/>Fast-tracked]
+    PP --> QQ[CI Pipeline<br/>Critical path only]
+    QQ --> RR[Security Scan<br/>Priority scan]
+    RR --> SS[Merge to main]
+    SS --> TT[Merge to develop<br/>Sync branches]
+    TT --> B
+    SS --> UU[Deploy to Production<br/>Immediate deployment]
+    UU --> A
 
     style A fill:#4CAF50
     style B fill:#2196F3
@@ -48,27 +59,52 @@ graph TD
     style V fill:#FFC107
     style D fill:#FF5722
     style E fill:#E91E63
-    style N fill:#8BC34A
-    style U fill:#8BC34A
+    style JJ fill:#8BC34A
+    style LL fill:#8BC34A
+    style UU fill:#8BC34A
 ```
 
-## Explanation
+## Enhanced Workflow Explanation
 
-- **main**: The primary branch with stable, production-ready code. Initial branch for hotfix requests.
-- **develop**: Integration branch for new features. Initial branch for feature, bugfix, and release requests.
-- **feature/**: Branches cloned from develop for developing new features.
-- **bugfix/**: Branches cloned from develop for fixing bugs discovered during development.
-- **release/**: Branches cloned from develop for preparing releases.
-- **hotfix/**: Branches cloned from main for fixing critical production bugs that require immediate deployment.
+### Branch Structure
+- **main**: Production-ready code with comprehensive CI/CD pipeline
+- **develop**: Integration branch with full testing suite
+- **feature/**: Feature development with basic CI checks
+- **bugfix/**: Development bug fixes with standard testing
+- **release/**: Release preparation with full QA pipeline
+- **hotfix/**: Critical production fixes with expedited process
 
-## Difference between Hotfix and Bugfix
+### CI/CD Pipeline Stages
+1. **Code Review**: Peer review for quality assurance
+2. **Linting**: Code style and syntax checking
+3. **Unit Tests**: Automated unit testing
+4. **Security Scan**: SAST and dependency vulnerability checks
+5. **Integration Tests**: End-to-end and performance testing
+6. **Compliance Check**: License and standards validation
 
-- **Hotfix**: Used for urgent, critical bugs in production code (main branch). These are high-priority fixes that need to be deployed immediately to production. After fixing, the hotfix is merged back to both main and develop.
-- **Bugfix**: Used for bugs found during development or testing in the develop branch. These are typically lower priority and follow the normal development cycle through develop before reaching production.
+### Process Differences
 
-The main differences are:
-- **Priority**: Hotfixes are for production emergencies, bugfixes are for development issues.
-- **Source Branch**: Hotfix from main, bugfix from develop.
-- **Urgency**: Hotfixes bypass normal release cycles, bugfixes follow the standard process.
+**Hotfix vs Bugfix:**
+- **Hotfix**: Emergency production fixes (highest priority)
+  - Fast-tracked review process
+  - Minimal CI pipeline for speed
+  - Immediate production deployment
+- **Bugfix**: Standard development fixes (normal priority)
+  - Full review and testing cycle
+  - Complete CI/CD pipeline
+  - Follows normal release process
 
-This diagram can be customized based on your project's specific needs.
+## Additional Enhancement Ideas
+
+1. **Rollback Procedures**: Add automated rollback steps for failed deployments
+2. **Monitoring Integration**: Include health checks and alerting after deployment
+3. **Environment Progression**: Show staging → production deployment flow
+4. **Automated Documentation**: Update docs automatically on releases
+5. **Stakeholder Notifications**: Alert teams on deployment status
+6. **Performance Monitoring**: Include APM and metrics collection
+7. **Compliance Automation**: Add automated compliance checks
+8. **Container Registry**: Show Docker image building and storage
+9. **Database Migrations**: Include DB schema change management
+10. **Feature Flags**: Show feature toggle management
+
+Would you like me to implement any of these additional features?
