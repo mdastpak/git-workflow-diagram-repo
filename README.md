@@ -63,6 +63,7 @@ Each version includes Mermaid diagrams that can be viewed directly in GitLab or 
 2. Open the corresponding `.md` file
 3. View the Mermaid diagram in GitLab or any Markdown renderer
 4. Follow the step-by-step explanations for implementation
+5. Review [Best Practices & Guidelines](BEST_PRACTICES.md) for security, performance, and compliance
 
 ## 🤝 **Contributing**
 
@@ -72,11 +73,17 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## 📋 **Resources**
+
+- 📚 **Best Practices**: [Security, Performance & Compliance Guidelines](BEST_PRACTICES.md)
+- 📖 **Documentation**: [Wiki](https://github.com/mdastpak/git-workflow-diagram-repo/wiki)
+- 🔗 **GitLab CI/CD Docs**: [Official Documentation](https://docs.gitlab.com/ee/ci/)
+
 ## 📞 **Support**
 
 - 📧 **Issues**: [GitHub Issues](https://github.com/mdastpak/git-workflow-diagram-repo/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/mdastpak/git-workflow-diagram-repo/discussions)
-- 📖 **Documentation**: [Wiki](https://github.com/mdastpak/git-workflow-diagram-repo/wiki)
+- ❓ **Q&A**: Check [Best Practices](BEST_PRACTICES.md) first
 
 ---
 
