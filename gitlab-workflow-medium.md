@@ -138,4 +138,38 @@ graph TD
 ### Security & Compliance Features
 40. **OOO (Build Docker Image - Container Registry)**: Create container images for deployment.
 41. **PPP (Push to Registry - Store artifacts)**: Store built images in secure registry.
+## 📚 Related Resources
+
+For detailed implementation guidance on the security and compliance features shown in this workflow:
+
+- **[Best Practices & Guidelines](../BEST_PRACTICES.md)**: Comprehensive security hardening checklists and compliance requirements
+- **Security Implementation**: Review the security scanning and access control sections
+- **Container Management**: Check container registry and Docker best practices
+- **Compliance Automation**: Follow GDPR, HIPAA, and other compliance frameworks
+
+## 🔧 Implementation Notes
+
+This medium workflow provides a balanced approach suitable for:
+
+- **Growing teams** transitioning to more mature DevOps practices
+- **Regulated industries** requiring enhanced security measures
+- **Organizations** implementing container-based deployments
+- **Projects** needing automated compliance validation
+
+### Prerequisites for Implementation:
+- Security scanning tools (SAST, DAST, dependency checking)
+- Container registry access (Docker Hub, GitLab Container Registry, etc.)
+- Compliance frameworks established
+- Team training on security best practices
+
+### Recommended Next Steps:
+1. Start with basic security scanning
+2. Gradually implement compliance automation
+3. Set up container registry workflows
+4. Establish monitoring and alerting
+5. Consider upgrading to advanced workflow for full enterprise features
+
+---
+
+*This workflow represents a security-enhanced CI/CD pipeline suitable for production environments with compliance requirements.*
 42. **QQQ (Compliance Automation - Automated checks)**: Automated compliance validation integrated into pipeline.
