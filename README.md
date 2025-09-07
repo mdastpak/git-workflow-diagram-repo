@@ -1,5 +1,11 @@
 # GitLab Workflow Diagram Repository
 
+[![GitHub stars](https://img.shields.io/github/stars/mdastpak/git-workflow-diagram-repo)](https://github.com/mdastpak/git-workflow-diagram-repo/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/mdastpak/git-workflow-diagram-repo)](https://github.com/mdastpak/git-workflow-diagram-repo/issues)
+[![GitHub license](https://img.shields.io/github/license/mdastpak/git-workflow-diagram-repo)](https://github.com/mdastpak/git-workflow-diagram-repo/blob/main/LICENSE)
+[![GitHub last commit](https://img.shields.io/github/last-commit/mdastpak/git-workflow-diagram-repo)](https://github.com/mdastpak/git-workflow-diagram-repo/commits/main)
+[![GitHub repo size](https://img.shields.io/github/repo-size/mdastpak/git-workflow-diagram-repo)](https://github.com/mdastpak/git-workflow-diagram-repo)
+
 This repository contains multiple versions of GitLab workflow diagrams, each with increasing levels of complexity and features. Choose the version that best fits your team's needs.
 
 ## Available Versions
@@ -50,3 +56,28 @@ This repository contains multiple versions of GitLab workflow diagrams, each wit
 - **Full Automation**: Adopt advanced version for complete CI/CD automation and monitoring
 
 Each version includes Mermaid diagrams that can be viewed directly in GitLab or rendered in documentation tools.
+
+## 📖 **Quick Start**
+
+1. Choose your complexity level based on your team's needs
+2. Open the corresponding `.md` file
+3. View the Mermaid diagram in GitLab or any Markdown renderer
+4. Follow the step-by-step explanations for implementation
+
+## 🤝 **Contributing**
+
+We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## 📄 **License**
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📞 **Support**
+
+- 📧 **Issues**: [GitHub Issues](https://github.com/mdastpak/git-workflow-diagram-repo/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/mdastpak/git-workflow-diagram-repo/discussions)
+- 📖 **Documentation**: [Wiki](https://github.com/mdastpak/git-workflow-diagram-repo/wiki)
+
+---
+
+⭐ **Star this repository** if you find it helpful! Your support helps others discover these workflow diagrams.
