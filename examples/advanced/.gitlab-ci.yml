@@ -1,0 +1,538 @@
+# GitLab CI/CD Configuration - Advanced Tier
+# Enterprise-grade CI/CD with full automation, monitoring, rollback, feature flags, DB migrations
+# Features: All Medium features + Automated Rollback, Health Checks, APM, DB Migrations, Feature Flags
+
+stages:
+  - lint
+  - security-sast
+  - security-dependency
+  - security-container
+  - test
+  - build
+  - container-build
+  - compliance
+  - feature-flags
+  - deploy-staging
+  - db-migration-staging
+  - integration-test
+  - performance-test
+  - health-check-staging
+  - deploy-production
+  - db-migration-production
+  - health-check-production
+  - rollback
+  - monitoring
+
+variables:
+  NODE_CACHE_KEY: "${CI_COMMIT_REF_SLUG}-node"
+  DOCKER_DRIVER: overlay2
+  DOCKER_TLS_CERTDIR: "/certs"
+  CI_REGISTRY_IMAGE: ${CI_REGISTRY}/${CI_PROJECT_PATH}
+  # Feature flags
+  FEATURE_FLAG_SERVICE_URL: "https://flags.example.com"
+  # Monitoring
+  APM_SERVER_URL: "https://apm.example.com"
+  # Rollback
+  ROLLBACK_ENABLED: "true"
+
+cache:
+  key: ${NODE_CACHE_KEY}
+  paths:
+    - .npm/
+    - node_modules/
+  policy: pull-push
+
+before_script:
+  - npm ci --cache .npm --prefer-offline
+
+# ===========================================
+# LINT STAGE
+# ===========================================
+lint:
+  stage: lint
+  image: node:20-alpine
+  script:
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+  allow_failure: false
+
+# ===========================================
+# SECURITY - SAST
+# ===========================================
+sast:
+  stage: security-sast
+  image: registry.gitlab.com/gitlab-org/security-products/sast:latest
+  variables:
+    SAST_EXCLUDED_PATHS: "node_modules,dist,.git,tests"
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      sast: gl-sast-report.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+  allow_failure: true
+
+# ===========================================
+# SECURITY - DEPENDENCY SCANNING
+# ===========================================
+dependency-scanning:
+  stage: security-dependency
+  image: registry.gitlab.com/gitlab-org/security-products/dependency-scanning:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      dependency_scanning: gl-dependency-scanning-report.json
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+  allow_failure: true
+
+# ===========================================
+# SECURITY - CONTAINER SCANNING
+# ===========================================
+container-scanning:
+  stage: security-container
+  image: registry.gitlab.com/gitlab-org/security-products/container-scanning:latest
+  variables:
+    DOCKER_IMAGE: "${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      container_scanning: gl-container-scanning-report.json
+    expire_in: 1 week
+  needs:
+    - container-build
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+  allow_failure: true
+
+# ===========================================
+# TEST STAGE
+# ===========================================
+unit-tests:
+  stage: test
+  image: node:20-alpine
+  script:
+    - npm run test:unit
+  coverage: '/COVERAGE:\s\d+\.\d+/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+
+# ===========================================
+# BUILD STAGE
+# ===========================================
+build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - npm run build
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - dist/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix\//
+
+# ===========================================
+# CONTAINER BUILD STAGE
+# ===========================================
+container-build:
+  stage: container-build
+  image: docker:24-cli
+  services:
+    - docker:24-dind
+  variables:
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+  script:
+    - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" .
+    - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA"
+    - docker tag "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" "$CI_REGISTRY_IMAGE:latest"
+    - docker push "$CI_REGISTRY_IMAGE:latest"
+    # Multi-arch build for production
+    - |
+      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+        docker buildx create --use --name multiarch || true
+        docker buildx build --platform linux/amd64,linux/arm64 \
+          --push -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_SHA" .
+      fi
+  artifacts:
+    expire_in: 1 week
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+  only:
+    - main
+    - release/*
+
+# ===========================================
+# COMPLIANCE STAGE
+# ===========================================
+license-compliance:
+  stage: compliance
+  image: registry.gitlab.com/gitlab-org/security-products/license-compliance:latest
+  script:
+    - /analyzer run
+  artifacts:
+    reports:
+      license_scanning: gl-license-scanning-report.json
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+  allow_failure: true
+
+compliance-check:
+  stage: compliance
+  image: node:20-alpine
+  script:
+    - echo "Running compliance checks..."
+    - npx license-checker --production --json > license-report.json
+    - node scripts/compliance-check.js
+    - node scripts/gdpr-check.js
+    - node scripts/soc2-check.js
+  artifacts:
+    reports:
+      license_scanning: license-report.json
+    expire_in: 1 month
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+
+# ===========================================
+# FEATURE FLAGS STAGE
+# ===========================================
+feature-flags-setup:
+  stage: feature-flags
+  image: node:20-alpine
+  script:
+    - echo "Setting up feature flags for this release..."
+    - node scripts/setup-feature-flags.js --commit-sha=$CI_COMMIT_SHA --branch=$CI_COMMIT_BRANCH
+  artifacts:
+    expire_in: 1 week
+    paths:
+      - feature-flags-config.json
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+  allow_failure: false
+
+# ===========================================
+# DEPLOY STAGING
+# ===========================================
+deploy-staging:
+  stage: deploy-staging
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: staging
+    url: https://staging.example.com
+    on_stop: stop-staging
+  script:
+    - echo "Deploying to staging environment..."
+    - IMAGE_TAG="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" deploy.sh staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  only:
+    - develop
+
+stop-staging:
+  stage: deploy-staging
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: staging
+    action: stop
+  script:
+    - echo "Stopping staging environment..."
+    - deploy.sh staging --stop
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+# ===========================================
+# DATABASE MIGRATION - STAGING
+# ===========================================
+db-migration-staging:
+  stage: db-migration-staging
+  image: registry.example.com/db-migrate:latest
+  environment:
+    name: staging
+  script:
+    - echo "Running database migrations on staging..."
+    - migrate.sh staging --tag="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}"
+  needs:
+    - deploy-staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  only:
+    - develop
+
+# ===========================================
+# INTEGRATION TESTS (against staging)
+# ===========================================
+integration-tests:
+  stage: integration-test
+  image: node:20-alpine
+  environment:
+    name: staging
+  script:
+    - npm run test:integration
+  artifacts:
+    reports:
+      junit: test-results/junit.xml
+    expire_in: 1 week
+  needs:
+    - db-migration-staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  only:
+    - develop
+
+# ===========================================
+# PERFORMANCE TESTS (against staging)
+# ===========================================
+performance-tests:
+  stage: performance-test
+  image: loadimpact/k6:latest
+  environment:
+    name: staging
+  script:
+    - echo "Running performance tests..."
+    - k6 run scripts/performance-test.js --env BASE_URL=https://staging.example.com
+  artifacts:
+    reports:
+      performance: performance-report.json
+    expire_in: 1 week
+  needs:
+    - integration-tests
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  only:
+    - develop
+
+# ===========================================
+# HEALTH CHECK - STAGING
+# ===========================================
+health-check-staging:
+  stage: health-check-staging
+  image: curlimages/curl:latest
+  environment:
+    name: staging
+  script:
+    - echo "Running health checks on staging..."
+    - |
+      for i in {1..30}; do
+        if curl -f https://staging.example.com/health; then
+          echo "Health check passed"
+          exit 0
+        fi
+        sleep 10
+      done
+    - echo "Health check failed"
+    - exit 1
+  needs:
+    - performance-tests
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  only:
+    - develop
+  allow_failure: false
+
+# ===========================================
+# DEPLOY PRODUCTION
+# ===========================================
+deploy-production:
+  stage: deploy-production
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: production
+    url: https://example.com
+  script:
+    - echo "Deploying to production environment..."
+    - IMAGE_TAG="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" deploy.sh production --blue-green
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+
+# ===========================================
+# DATABASE MIGRATION - PRODUCTION
+# ===========================================
+db-migration-production:
+  stage: db-migration-production
+  image: registry.example.com/db-migrate:latest
+  environment:
+    name: production
+  script:
+    - echo "Running database migrations on production..."
+    - migrate.sh production --tag="${CI_REGISTRY_IMAGE}:${CI_COMMIT_SHA}" --backup
+  needs:
+    - deploy-production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+  allow_failure: false
+
+# ===========================================
+# HEALTH CHECK - PRODUCTION
+# ===========================================
+health-check-production:
+  stage: health-check-production
+  image: curlimages/curl:latest
+  environment:
+    name: production
+  script:
+    - echo "Running health checks on production..."
+    - |
+      for i in {1..60}; do
+        if curl -f https://example.com/health; then
+          echo "Health check passed"
+          exit 0
+        fi
+        sleep 10
+      done
+    - echo "Health check failed - initiating rollback"
+    - exit 1
+  needs:
+    - db-migration-production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+  allow_failure: false
+
+# ===========================================
+# AUTOMATED ROLLBACK
+# ===========================================
+rollback-production:
+  stage: rollback
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: production
+  script:
+    - echo "Initiating automated rollback..."
+    - rollback.sh production --previous-version
+    - curl -X POST -H "Content-Type: application/json" -d '{"text":"🔄 Automated rollback triggered for production"}' $SLACK_WEBHOOK_URL
+  needs:
+    - health-check-production
+  when: on_failure
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $ROLLBACK_ENABLED == "true"
+  only:
+    - main
+
+# Manual rollback option
+manual-rollback:
+  stage: rollback
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: production
+  script:
+    - echo "Manual rollback triggered..."
+    - rollback.sh production --version=$ROLLBACK_VERSION
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+
+# ===========================================
+# MONITORING & ALERTING
+# ===========================================
+setup-monitoring:
+  stage: monitoring
+  image: node:20-alpine
+  script:
+    - echo "Setting up monitoring and alerts for this deployment..."
+    - node scripts/setup-monitoring.js --commit-sha=$CI_COMMIT_SHA --environment=production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+
+# APM Integration
+apm-integration:
+  stage: monitoring
+  image: curlimages/curl:latest
+  script:
+    - echo "Registering deployment with APM..."
+    - curl -X POST "$APM_SERVER_URL/api/deployments" \
+        -H "Authorization: Bearer $APM_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"service\":\"${CI_PROJECT_NAME}\",\"version\":\"${CI_COMMIT_SHA}\",\"environment\":\"production\"}"
+  needs:
+    - health-check-production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+
+# ===========================================
+# NOTIFICATIONS
+# ===========================================
+notify-staging:
+  stage: deploy-staging
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST -H "Content-Type: application/json" -d '{"text":"🚀 Staging deployment completed"}' $SLACK_WEBHOOK_URL
+  needs:
+    - deploy-staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+notify-production-success:
+  stage: monitoring
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST -H "Content-Type: application/json" -d '{"text":"✅ Production deployment completed successfully"}' $SLACK_WEBHOOK_URL
+  needs:
+    - health-check-production
+    - apm-integration
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+
+notify-production-failure:
+  stage: rollback
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST -H "Content-Type: application/json" -d '{"text":"❌ Production deployment failed - rollback initiated"}' $SLACK_WEBHOOK_URL
+  needs:
+    - rollback-production
+  when: on_failure
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"

@@ -1,0 +1,28 @@
+{
+  "replacementPatterns": [
+    {
+      "pattern": "^https://github.com/mdastpak/git-workflow-diagram-repo/wiki.*$",
+      "replacement": "https://github.com/mdastpak/git-workflow-diagram-repo"
+    }
+  ],
+  "ignoredPatterns": [
+    "^https://docs.gitlab.com/.*",
+    "^https://owasp.org/.*",
+    "^https://www.nist.gov/.*",
+    "^https://github.com/mdastpak/git-workflow-diagram-repo/issues.*",
+    "^https://github.com/mdastpak/git-workflow-diagram-repo/discussions.*",
+    "^https://img.shields.io/.*"
+  ],
+  "httpHeaders": [
+    {
+      "urls": ["https://github.com/*"],
+      "headers": {
+        "Accept": "text/html"
+      }
+    }
+  ],
+  "aliveStatusCodes": [200, 301, 302, 403, 429],
+  "retryCount": 3,
+  "retryDelay": 1000,
+  "timeout": 10000
+}

@@ -95,6 +95,99 @@ graph TD
     style VVV fill:#E91E63
 ```
 
+## Horizontal Layout Variant (Better for Wide Screens)
+
+```mermaid
+graph LR
+    A[main<br/>Stable code, ready for production] -->|Clone for hotfix| E[hotfix/<br/>Fix production bugs]
+    A -->|Initial branch for develop| B[develop<br/>Integration branch for features]
+    B -->|Clone for feature| C[feature/<br/>Develop new features]
+    B -->|Clone for bugfix| V[bugfix/<br/>Fix development bugs]
+    B -->|Clone for release| D[release/<br/>Prepare for production release]
+
+    C --> F[Develop Feature Code]
+    F --> G[Create Merge Request<br/>to develop]
+    G --> H[Code Review<br/>Peer Review Required]
+    H --> I[CI Pipeline<br/>Lint + Unit Tests]
+    I --> J[Security Scan<br/>SAST + Dependency Check]
+    J --> K[Merge to develop]
+    K --> B
+
+    V --> W[Fix Bug<br/>Development bug fix]
+    W --> X[Create Merge Request<br/>to develop]
+    X --> Y[Code Review<br/>Peer Review Required]
+    Y --> Z[CI Pipeline<br/>Lint + Unit Tests]
+    Z --> AA[Security Scan<br/>SAST + Dependency Check]
+    AA --> BB[Merge to develop]
+    BB --> B
+
+    D --> CC[Prepare Release<br/>Final testing]
+    CC --> DD[Create Merge Request<br/>to main]
+    DD --> EE[Code Review<br/>Senior Review Required]
+    EE --> FF[Full CI/CD Pipeline<br/>All Tests + Integration]
+    FF --> GG[Security Scan<br/>Full Security Suite]
+    GG --> HH[Compliance Check<br/>License + Standards]
+    HH --> II[Merge to main]
+    II --> JJ[Deploy to Staging]
+    JJ --> KK[Integration Tests<br/>E2E + Performance]
+    KK --> LL[Deploy to Production]
+    LL --> A
+    II --> MM[Merge back to develop<br/>Sync branches]
+    MM --> B
+
+    E --> NN[Fix Bug<br/>Critical hotfix]
+    NN --> OO[Create Merge Request<br/>to main]
+    OO --> PP[Emergency Review<br/>Fast-tracked]
+    PP --> QQ[CI Pipeline<br/>Critical path only]
+    QQ --> RR[Security Scan<br/>Priority scan]
+    RR --> SS[Merge to main]
+    SS --> TT[Merge to develop<br/>Sync branches]
+    TT --> B
+    SS --> UU[Deploy to Production<br/>Immediate deployment]
+    UU --> A
+
+    LL --> MMM[Stakeholder Notifications<br/>Alert teams on deployment]
+    MMM --> NNN[Automated Documentation<br/>Update docs on release]
+
+    II --> OOO[Build Docker Image<br/>Container Registry]
+    OOO --> PPP[Push to Registry<br/>Store artifacts]
+
+    GG --> QQQ[Compliance Automation<br/>Automated checks]
+    QQQ --> RR
+
+    LL --> RRR[Health Checks<br/>Monitoring Integration]
+    RRR --> SSS[Performance Monitoring<br/>APM + Metrics]
+
+    II --> TTT[Database Migrations<br/>Schema changes]
+    TTT --> UU
+
+    F --> UUU[Feature Flags<br/>Toggle management]
+    UUU --> G
+
+    LL --> VVV[Rollback Procedures<br/>Automated rollback on failure]
+    VVV --> A
+
+    style A fill:#4CAF50
+    style B fill:#2196F3
+    style C fill:#FFC107
+    style V fill:#FFC107
+    style D fill:#FF5722
+    style E fill:#E91E63
+    style JJ fill:#8BC34A
+    style LL fill:#8BC34A
+    style UU fill:#8BC34A
+    style MMM fill:#9C27B0
+    style NNN fill:#607D8B
+    style OOO fill:#795548
+    style PPP fill:#795548
+    style QQQ fill:#F44336
+    style RRR fill:#00BCD4
+    style SSS fill:#00BCD4
+    style TTT fill:#3F51B5
+    style UUU fill:#FF9800
+    style VVV fill:#E91E63
+```
+
 ## Key Additions in Advanced Version
 - **Rollback Procedures**: Automated rollback for failed deployments
 - **Monitoring Integration**: Health checks and alerting
