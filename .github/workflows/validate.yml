@@ -1,0 +1,155 @@
+name: Validate Mermaid Diagrams
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - '*.md'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '*.md'
+
+jobs:
+  validate-mermaid:
+    name: Validate Mermaid Syntax
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Mermaid CLI
+        run: npm install -g @mermaid-js/mermaid-cli
+
+      - name: Find all Markdown files with Mermaid diagrams
+        id: find-diagrams
+        run: |
+          FILES=$(grep -rl '```mermaid' --include="*.md" . | head -20)
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+          echo "Found files with Mermaid diagrams:"
+          echo "$FILES"
+
+      - name: Validate Mermaid diagrams
+        if: steps.find-diagrams.outputs.files != ''
+        run: |
+          for file in ${{ steps.find-diagrams.outputs.files }}; do
+            echo "Validating $file..."
+            # Extract mermaid blocks and validate each
+            awk '/^```mermaid/{flag=1; next} /^```$/{flag=0; print "---END---"; next} flag' "$file" | \
+            while IFS= read -r line; do
+              if [ "$line" = "---END---" ]; then
+                # Validate the accumulated diagram
+                echo "$diagram" | mmdc -i - -o /dev/null 2>&1 || {
+                  echo "::error file=$file::Mermaid syntax validation failed"
+                  echo "$diagram"
+                  exit 1
+                }
+                diagram=""
+              else
+                diagram="${diagram}${line}\n"
+              fi
+            done
+          done
+        shell: bash
+
+      - name: Validate all Markdown links
+        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        with:
+          use-quiet-mode: 'yes'
+          config-file: '.markdown-link-check.json'
+
+  lint-markdown:
+    name: Lint Markdown Files
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install markdownlint-cli
+        run: npm install -g markdownlint-cli
+
+      - name: Run markdownlint
+        run: markdownlint '**/*.md' --ignore node_modules --ignore examples
+
+  check-file-structure:
+    name: Verify File Structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify required files exist
+        run: |
+          REQUIRED_FILES=(
+            "README.md"
+            "LICENSE"
+            "CONTRIBUTING.md"
+            "BEST_PRACTICES.md"
+            "gitlab-workflow-simple.md"
+            "gitlab-workflow-medium.md"
+            "gitlab-workflow-advanced.md"
+            "gitlab-workflow-original.md"
+            ".gitignore"
+          )
+          
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "::error::Missing required file: $file"
+              exit 1
+            fi
+            echo "✓ Found $file"
+          done
+
+      - name: Verify examples directory structure
+        run: |
+          EXAMPLE_DIRS=("simple" "medium" "advanced")
+          for dir in "${EXAMPLE_DIRS[@]}"; do
+            if [ ! -f "examples/$dir/.gitlab-ci.yml" ]; then
+              echo "::error::Missing examples/$dir/.gitlab-ci.yml"
+              exit 1
+            fi
+            echo "✓ Found examples/$dir/.gitlab-ci.yml"
+          done
+
+  validate-references:
+    name: Validate Cross-References
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check internal links in README
+        run: |
+          # Check that all referenced files exist
+          grep -oP '(?<=\()[^)]+\.md(?=\))' README.md | while read link; do
+            if [ ! -f "$link" ]; then
+              echo "::error file=README.md::Broken internal link: $link"
+              exit 1
+            fi
+            echo "✓ Valid link: $link"
+          done
+
+      - name: Check workflow file references
+        run: |
+          for workflow in gitlab-workflow-simple.md gitlab-workflow-medium.md gitlab-workflow-advanced.md; do
+            # Check BEST_PRACTICES.md reference
+            if ! grep -q "BEST_PRACTICES.md" "$workflow"; then
+              echo "::warning file=$workflow::Missing reference to BEST_PRACTICES.md"
+            fi
+            # Check CONTRIBUTING.md reference
+            if ! grep -q "CONTRIBUTING.md" "$workflow"; then
+              echo "::warning file=$workflow::Missing reference to CONTRIBUTING.md"
+            fi
+          done

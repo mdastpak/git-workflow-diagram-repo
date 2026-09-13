@@ -1,0 +1,136 @@
+# GitLab CI/CD Configuration - Simple Tier
+# Basic CI/CD pipeline for teams starting with GitLab CI/CD
+# Features: Linting, Unit Tests, Staging/Production Deployment
+
+stages:
+  - lint
+  - test
+  - build
+  - deploy-staging
+  - deploy-production
+
+variables:
+  # Cache configuration
+  NODE_CACHE_KEY: "${CI_COMMIT_REF_SLUG}-node"
+  DOCKER_DRIVER: overlay2
+
+# Default cache for all jobs
+cache:
+  key: ${NODE_CACHE_KEY}
+  paths:
+    - .npm/
+    - node_modules/
+
+# Global before_script
+before_script:
+  - npm ci --cache .npm --prefer-offline
+
+# ===========================================
+# LINT STAGE
+# ===========================================
+lint:
+  stage: lint
+  image: node:20-alpine
+  script:
+    - npm run lint
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+  allow_failure: false
+
+# ===========================================
+# TEST STAGE
+# ===========================================
+unit-tests:
+  stage: test
+  image: node:20-alpine
+  script:
+    - npm run test:unit
+  coverage: '/COVERAGE:\s\d+\.\d+/'
+  artifacts:
+    reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: coverage/cobertura-coverage.xml
+    expire_in: 1 week
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+# ===========================================
+# BUILD STAGE
+# ===========================================
+build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - npm run build
+  artifacts:
+    expire_in: 1 hour
+    paths:
+      - dist/
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_COMMIT_BRANCH =~ /^release\//
+
+# ===========================================
+# DEPLOY STAGING
+# ===========================================
+deploy-staging:
+  stage: deploy-staging
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: staging
+    url: https://staging.example.com
+  script:
+    - echo "Deploying to staging environment..."
+    - deploy.sh staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  only:
+    - develop
+
+# ===========================================
+# DEPLOY PRODUCTION
+# ===========================================
+deploy-production:
+  stage: deploy-production
+  image: registry.example.com/deploy-tools:latest
+  environment:
+    name: production
+    url: https://example.com
+  script:
+    - echo "Deploying to production environment..."
+    - deploy.sh production
+  when: manual
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  only:
+    - main
+
+# ===========================================
+# NOTIFICATIONS (post-deployment)
+# ===========================================
+notify-staging:
+  stage: deploy-staging
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST -H "Content-Type: application/json" -d '{"text":"🚀 Staging deployment completed"}' $SLACK_WEBHOOK_URL
+  needs:
+    - deploy-staging
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+notify-production:
+  stage: deploy-production
+  image: curlimages/curl:latest
+  script:
+    - curl -X POST -H "Content-Type: application/json" -d '{"text":"✅ Production deployment completed"}' $SLACK_WEBHOOK_URL
+  needs:
+    - deploy-production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"

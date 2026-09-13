@@ -76,8 +76,67 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📋 **Resources**
 
 - 📚 **Best Practices**: [Security, Performance & Compliance Guidelines](BEST_PRACTICES.md)
-- 📖 **Documentation**: [Wiki](https://github.com/mdastpak/git-workflow-diagram-repo/wiki)
+- 📖 **Documentation**: [GitHub Pages](https://mdastpak.github.io/git-workflow-diagram-repo/)
 - 🔗 **GitLab CI/CD Docs**: [Official Documentation](https://docs.gitlab.com/ee/ci/)
+- 🎯 **Examples**: [Ready-to-use CI/CD Templates](examples/README.md)
+
+## 🎯 **Version Comparison Matrix**
+
+| Feature | Simple | Medium | Advanced |
+|---------|--------|--------|----------|
+| **Git Flow Branching** | ✅ | ✅ | ✅ |
+| **Code Review** | ✅ | ✅ | ✅ |
+| **Lint + Unit Tests** | ✅ | ✅ | ✅ |
+| **Staging Deployment** | ✅ | ✅ | ✅ |
+| **Production Deployment** | ✅ | ✅ | ✅ |
+| **Stakeholder Notifications** | ✅ | ✅ | ✅ |
+| **Automated Documentation** | ✅ | ✅ | ✅ |
+| **SAST Scanning** | ❌ | ✅ | ✅ |
+| **Dependency Scanning** | ❌ | ✅ | ✅ |
+| **Container Registry** | ❌ | ✅ | ✅ |
+| **Container Scanning** | ❌ | ✅ | ✅ |
+| **License Compliance** | ❌ | ✅ | ✅ |
+| **Compliance Automation** | ❌ | ✅ | ✅ |
+| **Integration Tests** | ❌ | ✅ | ✅ |
+| **Performance Tests** | ❌ | ❌ | ✅ |
+| **Health Checks** | ❌ | ❌ | ✅ |
+| **APM / Metrics** | ❌ | ❌ | ✅ |
+| **Database Migrations** | ❌ | ❌ | ✅ |
+| **Feature Flags** | ❌ | ❌ | ✅ |
+| **Automated Rollback** | ❌ | ❌ | ✅ |
+| **Blue-Green Deploy** | ❌ | ❌ | ✅ |
+| **Multi-arch Docker** | ❌ | ❌ | ✅ |
+
+## 🗺️ **Decision Guide: Which Version to Choose?**
+
+```mermaid
+flowchart TD
+    Start([Start: Choose Workflow Version]) --> Q1{Team Size & Experience?}
+    Q1 -->|Small team, new to CI/CD| Simple
+    Q1 -->|Growing team, some CI/CD experience| Q2
+    Q1 -->|Enterprise, experienced DevOps| Q3
+    
+    Q2 --> Q2a{Security/Compliance Requirements?}
+    Q2a -->|Regulated industry, compliance needed| Medium
+    Q2a -->|Basic security sufficient| Simple
+    
+    Q3 --> Q3a{Complex Deployment Needs?}
+    Q3a -->|Zero-downtime, rollback, feature flags, DB migrations| Advanced
+    Q3a -->|Standard deployments with security| Medium
+    
+    Simple --> S1[Simple Version<br/>gitlab-workflow-simple.md<br/>✅ Basic CI/CD<br/>✅ Staging → Prod<br/>✅ Notifications<br/>✅ Auto-docs]
+    Medium --> M1[Medium Version<br/>gitlab-workflow-medium.md<br/>✅ All Simple features<br/>✅ SAST + Dependency Scan<br/>✅ Container Registry<br/>✅ Compliance Automation]
+    Advanced --> A1[Advanced Version<br/>gitlab-workflow-advanced.md<br/>✅ All Medium features<br/>✅ Auto Rollback<br/>✅ Health Checks + APM<br/>✅ DB Migrations<br/>✅ Feature Flags]
+    
+    S1 --> End([Start with chosen version<br/>Upgrade as needs grow])
+    M1 --> End
+    A1 --> End
+    
+    style Simple fill:#FFC107
+    style Medium fill:#FF5722
+    style Advanced fill:#E91E63
+    style End fill:#4CAF50
+```
 
 ## 📞 **Support**
 

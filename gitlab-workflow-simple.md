@@ -64,6 +64,68 @@ graph TD
     style NNN fill:#607D8B
 ```
 
+## Horizontal Layout Variant (Better for Wide Screens)
+
+```mermaid
+graph LR
+    A[main<br/>Stable code, ready for production] -->|Clone for hotfix| E[hotfix/<br/>Fix production bugs]
+    A -->|Initial branch for develop| B[develop<br/>Integration branch for features]
+    B -->|Clone for feature| C[feature/<br/>Develop new features]
+    B -->|Clone for bugfix| V[bugfix/<br/>Fix development bugs]
+    B -->|Clone for release| D[release/<br/>Prepare for production release]
+
+    C --> F[Develop Feature Code]
+    F --> G[Create Merge Request<br/>to develop]
+    G --> H[Code Review<br/>Peer Review Required]
+    H --> I[CI Pipeline<br/>Lint + Unit Tests]
+    I --> K[Merge to develop]
+    K --> B
+
+    V --> W[Fix Bug<br/>Development bug fix]
+    W --> X[Create Merge Request<br/>to develop]
+    X --> Y[Code Review<br/>Peer Review Required]
+    Y --> Z[CI Pipeline<br/>Lint + Unit Tests]
+    Z --> BB[Merge to develop]
+    BB --> B
+
+    D --> CC[Prepare Release<br/>Final testing]
+    CC --> DD[Create Merge Request<br/>to main]
+    DD --> EE[Code Review<br/>Senior Review Required]
+    EE --> FF[Full CI/CD Pipeline<br/>All Tests + Integration]
+    FF --> II[Merge to main]
+    II --> JJ[Deploy to Staging]
+    JJ --> KK[Integration Tests<br/>E2E + Performance]
+    KK --> LL[Deploy to Production]
+    LL --> A
+    II --> MM[Merge back to develop<br/>Sync branches]
+    MM --> B
+
+    E --> NN[Fix Bug<br/>Critical hotfix]
+    NN --> OO[Create Merge Request<br/>to main]
+    OO --> PP[Emergency Review<br/>Fast-tracked]
+    PP --> QQ[CI Pipeline<br/>Critical path only]
+    QQ --> SS[Merge to main]
+    SS --> TT[Merge to develop<br/>Sync branches]
+    TT --> B
+    SS --> UU[Deploy to Production<br/>Immediate deployment]
+    UU --> A
+
+    LL --> MMM[Stakeholder Notifications<br/>Alert teams on deployment]
+    MMM --> NNN[Automated Documentation<br/>Update docs on release]
+
+    style A fill:#4CAF50
+    style B fill:#2196F3
+    style C fill:#FFC107
+    style V fill:#FFC107
+    style D fill:#FF5722
+    style E fill:#E91E63
+    style JJ fill:#8BC34A
+    style LL fill:#8BC34A
+    style UU fill:#8BC34A
+    style MMM fill:#9C27B0
+    style NNN fill:#607D8B
+```
+
 ## Key Additions in Simple Version
 - **Environment Progression**: Clear staging to production flow
 - **Stakeholder Notifications**: Automated alerts after deployment

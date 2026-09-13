@@ -1,0 +1,96 @@
+# Pre-commit Hooks Configuration
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.38.0
+    hooks:
+      - id: markdownlint
+        name: Markdown Lint
+        entry: markdownlint
+        language: node
+        types: [markdown]
+        args:
+          - '--disable'
+          - 'MD013'  # Line length
+          - '--disable'
+          - 'MD033'  # Inline HTML
+          - '--disable'
+          - 'MD041'  # First line heading
+        exclude: ^examples/
+
+  # Mermaid diagram validation
+  - repo: local
+    hooks:
+      - id: mermaid-validate
+        name: Validate Mermaid Diagrams
+        entry: bash -c 'npx -y @mermaid-js/mermaid-cli -i "$1" -o /dev/null'
+        language: system
+        types: [markdown]
+        args: []
+        verbose: true
+        # Only run on files that contain mermaid diagrams
+        stages: [commit]
+
+  # Check for broken internal links
+  - repo: local
+    hooks:
+      - id: check-internal-links
+        name: Check Internal Markdown Links
+        entry: bash -c 'grep -oP "\([^)]+\.md\)" "$1" | sed "s/[()]//g" | while read link; do if [ ! -f "$link" ]; then echo "Broken link: $link in $1"; exit 1; fi; done'
+        language: system
+        types: [markdown]
+        stages: [commit]
+
+  # Trailing whitespace
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Remove Trailing Whitespace
+        exclude: ^examples/
+
+      - id: end-of-file-fixer
+        name: Fix End of Files
+        exclude: ^examples/
+
+      - id: check-yaml
+        name: Validate YAML Files
+        args: ['--unsafe']
+
+      - id: check-json
+        name: Validate JSON Files
+
+      - id: check-merge-conflict
+        name: Check for Merge Conflicts
+
+      - id: debug-logger
+        name: Check for Debug Statements
+        args: ['--debug-logger-pattern=console\.(log|debug|info|warn|error)']
+
+  # Spell checking (optional - can be disabled)
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.18.0
+    hooks:
+      - id: typos
+        name: Check Spelling
+        args: ['--config', '.typos.toml']
+        exclude: ^examples/
+
+  # Git commit message validation
+  - repo: https://github.com/commitizen-tools/commitizen
+    rev: v3.13.0
+    hooks:
+      - id: commitizen
+        name: Validate Commit Message
+        stages: [commit-msg]
+        args: ['--config', 'cz.toml']
+
+# Configuration for commitizen
+# Create cz.toml in root:
+# [tool.commitizen]
+# name = "cz_conventional_commits"
+# version = "0.0.1"
+# tag_format = "v$version"
