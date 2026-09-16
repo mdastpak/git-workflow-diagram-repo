@@ -181,6 +181,7 @@ graph LR
 For additional guidance on implementing and optimizing this basic workflow:
 
 - **[Best Practices & Guidelines](../BEST_PRACTICES.md)**: Performance optimization tips and basic security recommendations
+- **[Contributing Guidelines](../CONTRIBUTING.md)**: How to contribute to this project
 - **Pipeline Efficiency**: Review caching strategies and resource management
 - **Cost Optimization**: Check basic cost-saving techniques for CI/CD
 

@@ -258,6 +258,7 @@ graph LR
 For detailed implementation guidance on the advanced features shown in this workflow:
 
 - **[Best Practices & Guidelines](../BEST_PRACTICES.md)**: Comprehensive security, performance, and compliance guidelines
+- **[Contributing Guidelines](../CONTRIBUTING.md)**: How to contribute to this project
 - **Security Implementation**: Review the security hardening checklist and compliance requirements
 - **Performance Optimization**: Check pipeline efficiency and cost optimization strategies
 - **Monitoring Setup**: Follow the monitoring and incident response procedures

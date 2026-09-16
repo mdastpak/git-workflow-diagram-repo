@@ -219,6 +219,7 @@ graph LR
 For detailed implementation guidance on the security and compliance features shown in this workflow:
 
 - **[Best Practices & Guidelines](../BEST_PRACTICES.md)**: Comprehensive security hardening checklists and compliance requirements
+- **[Contributing Guidelines](../CONTRIBUTING.md)**: How to contribute to this project
 - **Security Implementation**: Review the security scanning and access control sections
 - **Container Management**: Check container registry and Docker best practices
 - **Compliance Automation**: Follow GDPR, HIPAA, and other compliance frameworks
